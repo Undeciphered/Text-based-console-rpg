@@ -56,6 +56,10 @@ class player : public entity {
             max_health = 1000;
             health = max_health;
         }
+        
+        void attack(std::unique_ptr<monster> &target, int damage) {
+            target->hit(damage);
+        }
 };
 
 class goblin : public monster {
@@ -67,13 +71,11 @@ class goblin : public monster {
 };
 
 class ghoul : public monster {
-    ghoul(std::string &name) : monster(name) {
-        max_health = 200;
-        health = max_health;
-    }
-
-
-
+    public:
+        ghoul(std::string &name) : monster(name) {
+            max_health = 200;
+            health = max_health;
+        }
 };
 
 class goblin_warlock : public monster {
@@ -130,10 +132,12 @@ int main() {
     std::vector<std::unique_ptr<monster>> monsters = spawn_goblins(7); // spawns goblins
     std::unique_ptr<goblin_warlock> warlock = std::make_unique<goblin_warlock>("warlock 1"); // spawns a goblin warlock
     
-    splash_attack(monsters);  
     print_monsters(monsters);
     
-    warlock -> heal_allies(monsters);
+    std::unique_ptr<player> undeciphered = std::make_unique<player>("Undeciphered");
+    std::cout<< "---player Attack!---\n";
+    undeciphered->attack(monsters[2], 50);
+    
     print_monsters(monsters);
     
     return 0;
