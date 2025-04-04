@@ -111,10 +111,12 @@ class goblin_warlock : public monster {
 
 std::vector<std::unique_ptr<monster>> spawn_monsters(int number_of_goblins) { // 0 1 2 3 4 | 5 6 7 8 9
     std::vector<std::unique_ptr<monster>> monsters;
+    int random_number;
     for(int i = 1; i <= number_of_goblins; i++) {
-        if((std::rand() % 10) > 4) {
+        random_number = (std::rand() % 10);
+        if(random_number > 4) {
             monsters.push_back(std::make_unique<goblin>("Goblin " + std::to_string(i)));
-        } else if((std::rand() % 10) < 5) {
+        } else if(random_number < 5) {
             monsters.push_back(std::make_unique<ghoul>("ghoul " + std::to_string(i)));
         }
     }
@@ -138,7 +140,7 @@ void splash_attack(std::vector<std::unique_ptr<monster>> &monsters) {
 int main() {
     std::srand(std::time(nullptr)); // seeds random generator
     std::vector<std::unique_ptr<monster>> monsters;
-    monsters = spawn_monsters(7); // spawns goblins
+    monsters = spawn_monsters(4); // spawns goblins
     std::unique_ptr<goblin_warlock> warlock = std::make_unique<goblin_warlock>("warlock 1"); // spawns a goblin warlock
     
     print_monsters(monsters);
