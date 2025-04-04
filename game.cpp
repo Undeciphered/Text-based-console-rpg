@@ -6,29 +6,32 @@
 #include <cstdlib>
 #include <algorithm>
 
-
 class monster {
     protected:
-		int health{0};
+	int health{0};
         int max_health{0};
         std::string name{""};
         bool healed{false};
         
     public:
-        bool was_healed() {
-            return healed;
-        }
-    
         monster(std::string Name) {
             name = Name;
         }
-    
+
+        bool was_healed() {
+            return healed;
+        }
+
         void hit(int damage) {
             health -= damage;
         }
 
         int get_health() {
             return health;
+        }
+
+        std::string get_name() {
+            return name;
         }
         
         void heal(int heal_amount) {
@@ -40,10 +43,6 @@ class monster {
                 healed = true;
             }
         }
-
-        void print_health() {
-            std::cout << name << " health: " << health << '\n'; 
-        }
 };
 
 class goblin : public monster {
@@ -51,8 +50,17 @@ class goblin : public monster {
         goblin(const std::string &name) : monster(name) {
             max_health = 100;
             health = max_health;
-
         }
+};
+
+class ghoul : public monster {
+    ghoul(const std::string &name) : monster(name) {
+        max_health = 200;
+        health = max_health;
+    }
+
+
+
 };
 
 class goblin_warlock : public monster {
@@ -89,9 +97,9 @@ std::vector<std::unique_ptr<monster>> spawn_goblins(int number_of_goblins) {
     return Goblins;
 }
 
-void print_goblins(std::vector<std::unique_ptr<monster>> &Goblins) {
+void print_monsters(std::vector<std::unique_ptr<monster>> &Goblins) {
     for(auto &c : Goblins) {
-        c -> print_health();
+        std::cout << c->get_name() << " health: " << c->get_health() << '\n'; 
     } 
 }
 
@@ -110,10 +118,10 @@ int main() {
     std::unique_ptr<goblin_warlock> warlock = std::make_unique<goblin_warlock>("warlock 1"); // spawns a goblin warlock
     
     splash_attack(goblins);  
-    print_goblins(goblins);
+    print_monsters(goblins);
     
     warlock -> heal_allies(goblins);
-    print_goblins(goblins);
+    print_monsters(goblins);
     
     return 0;
 }
