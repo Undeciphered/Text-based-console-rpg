@@ -42,12 +42,17 @@ class entity {
         bool was_healed() {
             return healed;
         }
-
+        
+        template<typename T>
+        void attack(std::unique_ptr<T> &target, int damage) {
+            target->hit(damage);
+            std::cout<< "---" << target->get_name() << " Attacks!---\n";
+        }
 };
 
 class monster : public entity {
     public:
-        monster(const std::string &name) : entity(name) {}
+        monster(const std::string &name) : entity(name) {}   
 };
 
 class player : public entity {
@@ -55,10 +60,6 @@ class player : public entity {
         player(const std::string &name) : entity(name) {
             max_health = 1000;
             health = max_health;
-        }
-        
-        void attack(std::unique_ptr<monster> &target, int damage) {
-            target->hit(damage);
         }
 };
 
@@ -134,11 +135,14 @@ int main() {
     
     print_monsters(monsters);
     
-    std::unique_ptr<player> undeciphered = std::make_unique<player>("Undeciphered");
-    std::cout<< "---player Attack!---\n";
-    undeciphered->attack(monsters[2], 50);
+    std::unique_ptr<player> the_player = std::make_unique<player>("Undeciphered");
+    std::cout << the_player->get_name() << " health: " << the_player->get_health() << '\n'; 
+    
+    the_player->attack(monsters[2], 50);
+    monsters[2]->attack(the_player, 50);
     
     print_monsters(monsters);
+    std::cout << the_player->get_name() << " health: " << the_player->get_health() << '\n'; 
     
     return 0;
 }
