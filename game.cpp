@@ -1,9 +1,11 @@
 #include <iostream>
+#include <string>
 #include <vector>
 #include <memory>
 #include <ctime>
 #include <cstdlib>
 #include <algorithm>
+
 
 class goblin {
     protected:
