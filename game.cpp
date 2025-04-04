@@ -46,13 +46,16 @@ class entity {
         template<typename T>
         void attack(std::unique_ptr<T> &target, int damage) {
             target->hit(damage);
-            std::cout<< "---" << target->get_name() << " Attacks!---\n";
+            std::cout<< this->get_name() << " Attacks " << target->get_name() << "!\n";
         }
+
 };
 
 class monster : public entity {
     public:
-        monster(const std::string &name) : entity(name) {}   
+        monster(const std::string &name) : entity(name) {}
+        
+        
 };
 
 class player : public entity {
@@ -61,6 +64,7 @@ class player : public entity {
             max_health = 1000;
             health = max_health;
         }
+
 };
 
 class goblin : public monster {
@@ -73,7 +77,7 @@ class goblin : public monster {
 
 class ghoul : public monster {
     public:
-        ghoul(std::string &name) : monster(name) {
+        ghoul(const std::string &name) : monster(name) {
             max_health = 200;
             health = max_health;
         }
@@ -105,32 +109,36 @@ class goblin_warlock : public monster {
             }
 };
 
-std::vector<std::unique_ptr<monster>> spawn_goblins(int number_of_goblins) {
-    std::vector<std::unique_ptr<monster>> Goblins;
+std::vector<std::unique_ptr<monster>> spawn_monsters(int number_of_goblins) { // 0 1 2 3 4 | 5 6 7 8 9
+    std::vector<std::unique_ptr<monster>> monsters;
     for(int i = 1; i <= number_of_goblins; i++) {
-        Goblins.push_back(std::make_unique<goblin>("Goblin " + std::to_string(i)));
+        if((std::rand() % 10) > 4) {
+            monsters.push_back(std::make_unique<goblin>("Goblin " + std::to_string(i)));
+        } else if((std::rand() % 10) < 5) {
+            monsters.push_back(std::make_unique<ghoul>("ghoul " + std::to_string(i)));
+        }
     }
-    return Goblins;
+    return monsters;
 }
 
-void print_monsters(std::vector<std::unique_ptr<monster>> &Goblins) {
-    for(auto &c : Goblins) {
-        std::cout << c->get_name() << " health: " << c->get_health() << '\n'; 
-    } 
+void print_monsters(std::vector<std::unique_ptr<monster>> &monsters) {
+    for(auto &c : monsters) {
+        std::cout << "| " << c->get_name() << ": " << c->get_health() << "HP "; 
+    }
+    std::cout << "|\n";
 }
 
-void splash_attack(std::vector<std::unique_ptr<monster>> &Goblins) {
-    for(auto &c : Goblins) {
+void splash_attack(std::vector<std::unique_ptr<monster>> &monsters) {
+    for(auto &c : monsters) {
         c -> hit((std::rand() % 11) * 10);
     }
     std::cout << "---Splash Attack!---\n";
-    
 }
 
 int main() {
     std::srand(std::time(nullptr)); // seeds random generator
-    
-    std::vector<std::unique_ptr<monster>> monsters = spawn_goblins(7); // spawns goblins
+    std::vector<std::unique_ptr<monster>> monsters;
+    monsters = spawn_monsters(7); // spawns goblins
     std::unique_ptr<goblin_warlock> warlock = std::make_unique<goblin_warlock>("warlock 1"); // spawns a goblin warlock
     
     print_monsters(monsters);
