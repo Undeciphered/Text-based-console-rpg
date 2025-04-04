@@ -6,34 +6,17 @@
 #include <cstdlib>
 #include <algorithm>
 
-class monster {
+class entity {
     protected:
-	int health{0};
+        int health{0};
         int max_health{0};
         std::string name{""};
         bool healed{false};
-        
     public:
-        monster(std::string Name) {
+        entity(const std::string &Name) {
             name = Name;
         }
 
-        bool was_healed() {
-            return healed;
-        }
-
-        void hit(int damage) {
-            health -= damage;
-        }
-
-        int get_health() {
-            return health;
-        }
-
-        std::string get_name() {
-            return name;
-        }
-        
         void heal(int heal_amount) {
             if(heal_amount >= 0) {
                 health += heal_amount;
@@ -42,6 +25,36 @@ class monster {
                 }
                 healed = true;
             }
+        }
+
+        void hit(int damage) {
+            health -= damage;
+        }
+    
+        std::string get_name() {
+            return name;
+        }
+
+        int get_health() {
+            return health;
+        }
+
+        bool was_healed() {
+            return healed;
+        }
+
+};
+
+class monster : public entity {
+    public:
+        monster(const std::string &name) : entity(name) {}
+};
+
+class player : public entity {
+    public:
+        player(const std::string &name) : entity(name) {
+            max_health = 1000;
+            health = max_health;
         }
 };
 
@@ -54,7 +67,7 @@ class goblin : public monster {
 };
 
 class ghoul : public monster {
-    ghoul(const std::string &name) : monster(name) {
+    ghoul(std::string &name) : monster(name) {
         max_health = 200;
         health = max_health;
     }
@@ -114,14 +127,14 @@ void splash_attack(std::vector<std::unique_ptr<monster>> &Goblins) {
 int main() {
     std::srand(std::time(nullptr)); // seeds random generator
     
-    std::vector<std::unique_ptr<monster>> goblins = spawn_goblins(7); // spawns goblins
+    std::vector<std::unique_ptr<monster>> monsters = spawn_goblins(7); // spawns goblins
     std::unique_ptr<goblin_warlock> warlock = std::make_unique<goblin_warlock>("warlock 1"); // spawns a goblin warlock
     
-    splash_attack(goblins);  
-    print_monsters(goblins);
+    splash_attack(monsters);  
+    print_monsters(monsters);
     
-    warlock -> heal_allies(goblins);
-    print_monsters(goblins);
+    warlock -> heal_allies(monsters);
+    print_monsters(monsters);
     
     return 0;
 }
