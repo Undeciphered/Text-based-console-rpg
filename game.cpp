@@ -59,11 +59,38 @@ class monster : public entity {
 };
 
 class player : public entity {
+    private:
+        int experience_points{0};
+        int level{0};
+    
     public:
         player(const std::string &name) : entity(name) {
             max_health = 1000;
             health = max_health;
         }
+        
+    void check_level_up() {
+        int experience_points_needed{((level+1) * (level+1) * 5)};
+        while(experience_points >= experience_points_needed) {
+            level++;
+            experience_points -= experience_points_needed;
+            experience_points_needed = ((level+1) * (level+1) * 5);
+        }
+    }
+        
+    void gain_experience_points(int &experience_points_gained) {
+        experience_points += experience_points_gained;
+        check_level_up();
+        
+    }
+    
+    int get_experience_points() {
+        return experience_points;   
+    }
+    
+    int get_level() {
+        return level;   
+    }
 
 };
 
@@ -140,19 +167,16 @@ void splash_attack(std::vector<std::unique_ptr<monster>> &monsters) {
 int main() {
     std::srand(std::time(nullptr)); // seeds random generator
     std::vector<std::unique_ptr<monster>> monsters;
-    monsters = spawn_monsters(4); // spawns goblins
-    std::unique_ptr<goblin_warlock> warlock = std::make_unique<goblin_warlock>("warlock 1"); // spawns a goblin warlock
-    
-    print_monsters(monsters);
+    monsters = spawn_monsters(4); // spawns monsters
+    std::unique_ptr<goblin_warlock> warlock = std::make_unique<goblin_warlock>("warlock 1"); // spawns a warlock
     
     std::unique_ptr<player> the_player = std::make_unique<player>("Undeciphered");
-    std::cout << the_player->get_name() << " health: " << the_player->get_health() << '\n'; 
     
-    the_player->attack(monsters[2], 50);
-    monsters[2]->attack(the_player, 50);
+    int gained{3250+57}; // temp varibale for testing
     
-    print_monsters(monsters);
-    std::cout << the_player->get_name() << " health: " << the_player->get_health() << '\n'; 
+    the_player->gain_experience_points(gained);
+    std::cout << the_player->get_experience_points() << " exp, level:" << the_player->get_level();
+    
     
     return 0;
 }
