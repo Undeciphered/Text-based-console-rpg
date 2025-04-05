@@ -8,6 +8,7 @@
 
 class entity {
     protected:
+        bool can_attack{true};
         int health{0};
         int max_health{0};
         std::string name{""};
@@ -28,7 +29,7 @@ class entity {
             }
         }
 
-        void hit(int damage) {
+        virtual void hit(int damage) {
             health -= damage;
         }
     
@@ -113,6 +114,97 @@ class player : public entity {
 
 };
 
+class hydra : public monster {
+    public:
+        hydra(const std::string &name) : monster(name) {
+            max_health = 250;
+            health = max_health;
+            damage = 15;
+        }
+    
+};
+
+class wraith : public monster {
+    public:
+        wraith(const std::string &name) : monster(name) {
+            max_health = 150;
+            health = max_health;
+            damage = 0;
+        }
+    
+};
+
+class bat : public monster {
+    public:
+        bat(const std::string &name) : monster(name) {
+            max_health = 50;
+            health = max_health;
+            damage = 5;
+        }
+    
+};
+
+class imp : public monster {
+    public:
+        imp(const std::string &name) : monster(name) {
+            max_health = 70;
+            health = max_health;
+            damage = 10;
+        }
+    
+};
+
+class wyrm : public monster {
+    public:
+        wyrm(const std::string &name) : monster(name) {
+            max_health = 100;
+            health = max_health;
+            damage = 10;
+        }
+    
+};
+
+class stone_golem : public monster {
+    public:
+        stone_golem(const std::string &name) : monster(name) {
+            max_health = 500;
+            health = max_health;
+            damage = 50;
+        }
+    
+};
+
+
+class armored_dragon : public monster {
+    public:
+        armored_dragon(const std::string &name) : monster(name) {
+            max_health = 500;
+            health = max_health;
+            damage = 50;
+        }
+    
+};
+
+class lord_cthulhu : public monster {
+    public:
+        lord_cthulhu(const std::string &name) : monster(name) {
+            max_health = 400;
+            health = max_health;
+            damage = 25;
+        }
+    
+};
+
+class the_reaper : public monster {
+    public:
+        the_reaper(const std::string &name) : monster(name) {
+            max_health = 10000;
+            health = max_health;
+            damage = 1000;
+        }
+    
+};
+
 class goblin : public monster {
     public:
         goblin(const std::string &name) : monster(name) {
@@ -124,7 +216,7 @@ class goblin : public monster {
 class ghoul : public monster {
     public:
         ghoul(const std::string &name) : monster(name) {
-            max_health = 200;
+            max_health = 150;
             health = max_health;
         }
 };
