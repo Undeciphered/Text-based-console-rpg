@@ -12,6 +12,7 @@ class entity {
         int max_health{0};
         std::string name{""};
         bool healed{false};
+        int damage{10};
     public:
         entity(const std::string &Name) {
             name = Name;
@@ -65,16 +66,18 @@ class player : public entity {
     
     public:
         player(const std::string &name) : entity(name) {
-            max_health = 1000;
+            max_health = 100;
             health = max_health;
         }
         
     void check_level_up() {
-        int experience_points_needed{((level+1) * (level+1) * 5)};
+        int experience_points_needed{((level+1) * (level+1) * 3)};
         while(experience_points >= experience_points_needed) {
             level++;
+            max_health += 15;
+            damage = 20 + level * level * 0.15;
             experience_points -= experience_points_needed;
-            experience_points_needed = ((level+1) * (level+1) * 5);
+            experience_points_needed = ((level+1) * (level+1) * 3);
         }
     }
         
@@ -90,6 +93,10 @@ class player : public entity {
     
     int get_level() {
         return level;   
+    }
+    
+    int get_damage() {
+        return damage;   
     }
 
 };
@@ -172,10 +179,13 @@ int main() {
     
     std::unique_ptr<player> the_player = std::make_unique<player>("Undeciphered");
     
-    int gained{3250+57}; // temp varibale for testing
+    int gained{3333}; // temp varibale for testing
     
     the_player->gain_experience_points(gained);
     std::cout << the_player->get_experience_points() << " exp, level:" << the_player->get_level();
+    the_player->heal(1000);
+    std::cout << " damage: " << the_player->get_damage() << " health: " << the_player->get_health();
+
     
     
     return 0;
