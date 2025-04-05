@@ -63,6 +63,9 @@ class player : public entity {
     private:
         int experience_points{0};
         int level{0};
+        int max_mana{50};
+        int mana{50};
+        bool was_mana_restored{false};
     
     public:
         player(const std::string &name) : entity(name) {
@@ -75,6 +78,9 @@ class player : public entity {
         while(experience_points >= experience_points_needed) {
             level++;
             max_health += 15;
+            max_mana += 5;
+            mana_restore(1000);
+            heal(1000);
             damage = 20 + level * level * 0.15;
             experience_points -= experience_points_needed;
             experience_points_needed = ((level+1) * (level+1) * 3);
@@ -87,16 +93,22 @@ class player : public entity {
         
     }
     
-    int get_experience_points() {
-        return experience_points;   
-    }
-    
     int get_level() {
         return level;   
     }
     
-    int get_damage() {
-        return damage;   
+    void mana_restore(int restore_amount) {
+        if(restore_amount >= 0) {
+            mana += restore_amount;
+            if(mana > max_mana) {
+                mana = max_mana; 
+            }
+            was_mana_restored = true;
+        }
+    }
+    
+    int get_mana() {
+        return mana;
     }
 
 };
@@ -182,11 +194,7 @@ int main() {
     int gained{3333}; // temp varibale for testing
     
     the_player->gain_experience_points(gained);
-    std::cout << the_player->get_experience_points() << " exp, level:" << the_player->get_level();
-    the_player->heal(1000);
-    std::cout << " damage: " << the_player->get_damage() << " health: " << the_player->get_health();
+    std::cout << " level: " << the_player->get_level() << ", health: " << the_player->get_health() << ", mana: " << the_player->get_mana();
 
-    
-    
     return 0;
 }
