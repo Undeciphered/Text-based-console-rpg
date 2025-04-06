@@ -29,7 +29,7 @@ class entity {
             }
         }
 
-        virtual void hit(int damage) {
+        void hit(int damage) {
             health -= damage;
         }
     
@@ -53,13 +53,6 @@ class entity {
 
 };
 
-class monster : public entity {
-    public:
-        monster(const std::string &name) : entity(name) {}
-        
-        
-};
-
 class player : public entity {
     private:
         int experience_points{0};
@@ -67,6 +60,7 @@ class player : public entity {
         int max_mana{50};
         int mana{50};
         bool was_mana_restored{false};
+        bool can_use_mana{true};
     
     public:
         player(const std::string &name) : entity(name) {
@@ -114,6 +108,15 @@ class player : public entity {
 
 };
 
+class monster : public entity {
+    public:
+        monster(const std::string &name) : entity(name) {}
+        
+        void attack(std::unique_ptr<player> &target) {
+            target->hit(damage);
+        }
+};
+
 class hydra : public monster {
     public:
         hydra(const std::string &name) : monster(name) {
@@ -121,7 +124,15 @@ class hydra : public monster {
             health = max_health;
             damage = 15;
         }
-    
+        
+        void attack(std::unique_ptr<player> &target) {
+            int random = (std::rand() % 4); // 0 1 2 | 3
+            if(random < 3) {
+                target->hit(damage); // stomp
+            } else if(random > 2) {
+                target->hit(damage); // acid spray
+            } 
+        }
 };
 
 class wraith : public monster {
@@ -131,7 +142,10 @@ class wraith : public monster {
             health = max_health;
             damage = 0;
         }
-    
+        
+        void attack(std::unique_ptr<player> &target) {
+            target->hit(damage); // haunt
+        }
 };
 
 class bat : public monster {
@@ -141,7 +155,6 @@ class bat : public monster {
             health = max_health;
             damage = 5;
         }
-    
 };
 
 class imp : public monster {
@@ -171,7 +184,15 @@ class stone_golem : public monster {
             health = max_health;
             damage = 50;
         }
-    
+        
+        void attack(std::unique_ptr<player> &target) {
+            int random = (std::rand() % 4); // 0 1 2 | 3
+            if(random < 3) {
+                target->hit(damage); // smash
+            } else if(random > 2) {
+                target->hit(damage); // crush
+            } 
+        }
 };
 
 
@@ -181,6 +202,15 @@ class armored_dragon : public monster {
             max_health = 500;
             health = max_health;
             damage = 50;
+        }
+        
+        void attack(std::unique_ptr<player> &target) {
+            int random = (std::rand() % 4); // 0 1 | 2 3
+            if(random < 2) {
+                target->hit(damage); // breathe fire
+            } else if(random > 1) {
+                target->hit(damage); // stomp
+            } 
         }
     
 };
@@ -192,7 +222,15 @@ class lord_cthulhu : public monster {
             health = max_health;
             damage = 25;
         }
-    
+        
+        void attack(std::unique_ptr<player> &target) {
+            int random = (std::rand() % 5); // 0 1 | 2 3 4
+            if(random < 2) {
+                target->hit(damage); // water torrent
+            } else if(random > 1) {
+                target->hit(damage); // magic missile
+            } 
+        }
 };
 
 class the_reaper : public monster {
@@ -202,7 +240,6 @@ class the_reaper : public monster {
             health = max_health;
             damage = 1000;
         }
-    
 };
 
 class goblin : public monster {
