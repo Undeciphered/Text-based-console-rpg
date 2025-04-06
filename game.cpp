@@ -423,14 +423,73 @@ void splash_attack(std::vector<std::unique_ptr<monster>> &monsters) {
     std::cout << "---Splash Attack!---\n";
 }
 
-void gameplay_loop() {
+std::vector<int> initialise_enemy_linup() {
+    std::vector<int> enemy_linup;
+    int random = (std::rand() % 2) + 2; // 0 1 -> 2 3
+    while(random > 0) {  // some ones
+        enemy_linup.push_back(1);
+        random--;
+    }
+    random = (std::rand() % 2) + 2; // 0 1 -> 2 3
+    while(random > 0) { // some twos some ones
+        if((std::rand() % 4) < 1) {
+            enemy_linup.push_back(1);
+        } else {
+            enemy_linup.push_back(2);
+        }
+        random--;    
+    }
+    random = (std::rand() % 2) + 1; // 0 1 -> 1 2
+    while(random > 0) {  // some twos
+        enemy_linup.push_back(2);
+        random--;
+    }
+    random = (std::rand() % 2); // 0 1
+    while(random > 0) {  // maybe a three
+        enemy_linup.push_back(3);
+        random--;
+    }
+    random = (std::rand() % 2) + 1; // 0 1 -> 1 2
+    while(random > 0) {  // some more twos
+        enemy_linup.push_back(2);
+        random--;
+    }
+    random = (std::rand() % 3) + 1; // 0 1 2 -> 1 2 3
+    while(random > 0) { // some threes some twos
+        if((std::rand() % 3) < 1) {
+            enemy_linup.push_back(2);
+        } else {
+            enemy_linup.push_back(3);
+        }
+        random--;    
+    }
+    random = (std::rand() % 2) + 1; // 0 1 -> 1 2
+    while(random > 0) {  // some threes
+        enemy_linup.push_back(3);
+        random--;
+    }
+    random = (std::rand() % 1) + 1; // 0 -> 1
+    while(random > 0) {  // a boss
+        enemy_linup.push_back(4);
+        random--;
+    }
+    return enemy_linup;
+}
+
+void gameplay_loop() { 
+    std::vector<int> enemy_linup = initialise_enemy_linup(); 
     while(true){
         
         std::unique_ptr<stone_golem> stone_golem_1 = std::make_unique<stone_golem>("stone golem 1"); // spawns a warlock
         std::unique_ptr<player> the_player = std::make_unique<player>("Undeciphered");
         the_player->set_debuff("prone", 2);
         the_player->print_debuffs();
+         
+        std::cout << '\n';
         
+        for(auto c : enemy_linup) {
+            std::cout << c << " ";  
+        }
         return;
     }
 }
