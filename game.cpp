@@ -6,6 +6,8 @@
 #include <cstdlib>
 #include <algorithm>
 #include <map>
+#include <queue>
+#include <cmath>
 
 class entity {
     protected:
@@ -132,13 +134,6 @@ class player : public entity {
                     debuffs["bloodied"].first = false;
                 }
             }
-        }
-        
-        void print_debuffs() {
-            for(auto &c : debuffs) {
-                std::cout << c.first << ": " << c.second.first << "," << c.second.second << '\n'; 
-            }
-            
         }
         
         void check_level_up() {
@@ -395,101 +390,162 @@ class warlock : public monster {
             }
 };
 
-std::vector<std::unique_ptr<monster>> spawn_monsters(int number_of_goblins) { // 0 1 2 3 4 | 5 6 7 8 9
-    std::vector<std::unique_ptr<monster>> monsters;
-    int random_number;
-    for(int i = 1; i <= number_of_goblins; i++) {
-        random_number = (std::rand() % 10);
-        if(random_number > 4) {
-            monsters.push_back(std::make_unique<goblin>("Goblin " + std::to_string(i)));
-        } else if(random_number < 5) {
-            monsters.push_back(std::make_unique<ghoul>("ghoul " + std::to_string(i)));
-        }
-    }
-    return monsters;
-}
-
-void print_monsters(std::vector<std::unique_ptr<monster>> &monsters) {
+void print_monsters() {
     for(auto &c : monsters) {
         std::cout << "| " << c->get_name() << ": " << c->get_health() << "HP "; 
     }
     std::cout << "|\n";
 }
 
-void splash_attack(std::vector<std::unique_ptr<monster>> &monsters) {
-    for(auto &c : monsters) {
-        c -> hit((std::rand() % 11) * 10);
-    }
-    std::cout << "---Splash Attack!---\n";
-}
-
-std::vector<int> initialise_enemy_linup() {
-    std::vector<int> enemy_linup;
+std::queue<int> initialise_enemy_linup() {
+    std::queue<int> enemy_linup;
     int random = (std::rand() % 2) + 2; // 0 1 -> 2 3
     while(random > 0) {  // some ones
-        enemy_linup.push_back(1);
+        enemy_linup.push(1);
         random--;
     }
     random = (std::rand() % 2) + 2; // 0 1 -> 2 3
     while(random > 0) { // some twos some ones
         if((std::rand() % 4) < 1) {
-            enemy_linup.push_back(1);
+            enemy_linup.push(1);
         } else {
-            enemy_linup.push_back(2);
+            enemy_linup.push(2);
         }
         random--;    
     }
     random = (std::rand() % 2) + 1; // 0 1 -> 1 2
     while(random > 0) {  // some twos
-        enemy_linup.push_back(2);
+        enemy_linup.push(2);
         random--;
     }
     random = (std::rand() % 2); // 0 1
     while(random > 0) {  // maybe a three
-        enemy_linup.push_back(3);
+        enemy_linup.push(3);
         random--;
     }
     random = (std::rand() % 2) + 1; // 0 1 -> 1 2
     while(random > 0) {  // some more twos
-        enemy_linup.push_back(2);
+        enemy_linup.push(2);
         random--;
     }
     random = (std::rand() % 3) + 1; // 0 1 2 -> 1 2 3
     while(random > 0) { // some threes some twos
         if((std::rand() % 3) < 1) {
-            enemy_linup.push_back(2);
+            enemy_linup.push(2);
         } else {
-            enemy_linup.push_back(3);
+            enemy_linup.push(3);
         }
         random--;    
     }
     random = (std::rand() % 2) + 1; // 0 1 -> 1 2
     while(random > 0) {  // some threes
-        enemy_linup.push_back(3);
+        enemy_linup.push(3);
         random--;
     }
     random = (std::rand() % 1) + 1; // 0 -> 1
     while(random > 0) {  // a boss
-        enemy_linup.push_back(4);
+        enemy_linup.push(4);
         random--;
     }
     return enemy_linup;
 }
 
+void spawn_monster_type_one(int spawnable_amount) {
+    int random{0};
+    while(spawnable_amount != 0) {
+        random = std::rand() % 3;
+        if(random == 0) {monsters.push_back(std::make_unique<bat>("Bat 1"));}
+        if(random == 1) {monsters.push_back(std::make_unique<imp>("Imp 1"));}
+        if(random == 2) {monsters.push_back(std::make_unique<goblin>("Goblin 1"));}
+        spawnable_amount--;
+    }
+}
+
+void spawn_monster_type_two(int spawnable_amount) {
+    int random{0};
+    while(spawnable_amount != 0) {
+        random = std::rand() % 3;
+        if(random == 0) {monsters.push_back(std::make_unique<wyrm>("Wyrm 2"));}
+        if(random == 1) {monsters.push_back(std::make_unique<wraith>("Wraith 2"));}
+        if(random == 2) {monsters.push_back(std::make_unique<ghoul>("Ghoul 2"));}
+        spawnable_amount--;
+    }
+}
+
+void spawn_monster_type_three(int spawnable_amount) {
+    int random{0};
+    while(spawnable_amount != 0) {
+        random = std::rand() % 5;
+        if(random == 0) {monsters.push_back(std::make_unique<lord_cthulhu>("Lord Cthulhu 3"));}
+        if(random == 1 || random == 2) {monsters.push_back(std::make_unique<hydra>("Hydra 3"));}
+        if(random == 3 || random == 4) {monsters.push_back(std::make_unique<warlock>("Warlock 3"));}
+        spawnable_amount--;
+    }
+}
+
+void spawn_monster_type_four(int spawnable_amount) {
+    int random{0};
+    while(spawnable_amount != 0) {
+        random = std::rand() % 3;
+        if(random < 1) {monsters.push_back(std::make_unique<lord_cthulhu>("Stone Golem 4"));}
+        if(random > 0) {monsters.push_back(std::make_unique<hydra>("Armored dragon 4"));}
+        spawnable_amount--;
+    }
+}
+
+void spawn_monsters(int level, std::queue<int> &enemy_linup) {
+    monsters.clear();
+    int spawnable_amount = (std::round(pow(level,1.3) / 10) + 1);
+    int monster_dificulty = enemy_linup.front();
+    int random{0};
+    
+    if(monster_dificulty == 1) {
+        spawn_monster_type_one(spawnable_amount);
+    }
+    if(monster_dificulty == 2) {
+        spawn_monster_type_two(1);
+        spawnable_amount--;
+        for(int i = 0; i < spawnable_amount; i++) {
+           random = std::rand() % 3; // 0 | 1 2 
+           if(random > 0) {spawn_monster_type_one(1);}
+           if(random < 1) {spawn_monster_type_two(1);}
+        }
+    }
+    if(monster_dificulty == 3) {
+        spawn_monster_type_three(1);
+        spawnable_amount--;
+        for(int i = 0; i < spawnable_amount; i++) {
+           random = std::rand() % 4; // 0 | 1 2 3
+           if(random > 0) {spawn_monster_type_two(1);}
+           if(random < 1) {spawn_monster_type_three(1);}
+        }
+    }
+    if(monster_dificulty == 3) {
+        spawn_monster_type_four(1);
+    }
+    enemy_linup.pop();
+}
+
+void print_queue(std::queue<int> myqueue) {
+    while(!myqueue.empty()) {
+        std::cout << myqueue.front() << " ";
+        myqueue.pop();
+    }
+    std::cout << '\n';
+}
+
 void gameplay_loop() { 
-    std::vector<int> enemy_linup = initialise_enemy_linup(); 
+    std::queue<int> enemy_linup = initialise_enemy_linup(); 
     while(true){
         
-        std::unique_ptr<stone_golem> stone_golem_1 = std::make_unique<stone_golem>("stone golem 1"); // spawns a warlock
         std::unique_ptr<player> the_player = std::make_unique<player>("Undeciphered");
-        the_player->set_debuff("prone", 2);
-        the_player->print_debuffs();
-         
-        std::cout << '\n';
+        int temp_exp = 90;
+        the_player->gain_experience_points(temp_exp);
         
-        for(auto c : enemy_linup) {
-            std::cout << c << " ";  
-        }
+        print_queue(enemy_linup);
+        spawn_monsters(the_player->get_level(), enemy_linup);
+        print_monsters();
+        
         return;
     }
 }
@@ -497,7 +553,6 @@ void gameplay_loop() {
 int main() {
     std::srand(std::time(nullptr)); // seeds random generator
     gameplay_loop();
-
     
     return 0;
 }
