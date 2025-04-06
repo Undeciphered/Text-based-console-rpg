@@ -5,6 +5,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <algorithm>
+#include <map>
 
 class entity {
     protected:
@@ -44,23 +45,29 @@ class entity {
         bool was_healed() {
             return healed;
         }
-        
-        template<typename T>
-        void attack(std::unique_ptr<T> &target, int damage) {
-            target->hit(damage);
-            std::cout<< this->get_name() << " Attacks " << target->get_name() << "!\n";
-        }
-
 };
+
+class monster;
+std::vector<std::unique_ptr<monster>> monsters;
 
 class player : public entity {
     private:
+        std::map<std::string, std::pair<bool, int>> debuffs {
+        {"weakened",{false, 0}},
+        {"prone",{false, 0}},
+        {"ablaze",{false, 0}},
+        {"drenched",{false, 0}},
+        {"acidified",{false, 0}},
+        {"hexed",{false, 0}},
+        {"bloodied",{false, 0}}
+        };
         int experience_points{0};
         int level{0};
         int max_mana{50};
         int mana{50};
         bool was_mana_restored{false};
         bool can_use_mana{true};
+        double weakened_amount{1};
     
     public:
         player(const std::string &name) : entity(name) {
@@ -68,43 +75,109 @@ class player : public entity {
             health = max_health;
         }
         
-    void check_level_up() {
-        int experience_points_needed{((level+1) * (level+1) * 3)};
-        while(experience_points >= experience_points_needed) {
-            level++;
-            max_health += 15;
-            max_mana += 5;
-            mana_restore(1000);
-            heal(1000);
-            damage = 20 + level * level * 0.15;
-            experience_points -= experience_points_needed;
-            experience_points_needed = ((level+1) * (level+1) * 3);
+        void attack(std::unique_ptr<monster> &target, int damage);
+        
+        void set_debuff(std::string debuff, int info) {
+            debuffs[debuff] = {true, info};
         }
-    }
         
-    void gain_experience_points(int &experience_points_gained) {
-        experience_points += experience_points_gained;
-        check_level_up();
-        
-    }
-    
-    int get_level() {
-        return level;   
-    }
-    
-    void mana_restore(int restore_amount) {
-        if(restore_amount >= 0) {
-            mana += restore_amount;
-            if(mana > max_mana) {
-                mana = max_mana; 
+        void handle_debuffs() {
+            if(debuffs["drenched"].first == true) {
+                debuffs["acidified"].first = false;
+                debuffs["ablaze"].first = false;
+                mana -= 10;
+                debuffs["drenched"].first = false;
             }
-            was_mana_restored = true;
+            if(debuffs["weakened"].first == true) {
+                weakened_amount = 0.5;
+                debuffs["weakened"].second -= 1;
+                if (debuffs["weakened"].second == 0) {
+                    debuffs["weakened"].first = false;
+                }
+            }
+            if(debuffs["prone"].first == true) {
+                can_attack = false;
+                debuffs["prone"].second -= 1;
+                if (debuffs["prone"].second == 0) {
+                    debuffs["prone"].first = false;
+                    can_attack = true;
+                }
+            }
+            if(debuffs["ablaze"].first == true) {
+                health -= 10;
+                debuffs["ablaze"].second -= 1;
+                if (debuffs["ablaze"].second == 0) {
+                    debuffs["ablaze"].first = false;
+                }
+            }
+            if(debuffs["acidified"].first == true) {
+                health -= 10;
+                debuffs["acidified"].second -= 1;
+                if (debuffs["acidified"].second == 0) {
+                    debuffs["acidified"].first = false;
+                }
+            }
+            if(debuffs["hexed"].first == true) {  
+                can_use_mana = false;
+                debuffs["hexed"].second -= 1;
+                if (debuffs["hexed"].second == 0) {
+                    debuffs["hexed"].first = false;
+                    can_use_mana = true;
+                }
+            }
+            if(debuffs["bloodied"].first == true) {  
+                health -= 5;
+                debuffs["bloodied"].second -= 1;
+                if (debuffs["bloodied"].second == 0) {
+                    debuffs["bloodied"].first = false;
+                }
+            }
         }
-    }
-    
-    int get_mana() {
-        return mana;
-    }
+        
+        void print_debuffs() {
+            for(auto &c : debuffs) {
+                std::cout << c.first << ": " << c.second.first << "," << c.second.second << '\n'; 
+            }
+            
+        }
+        
+        void check_level_up() {
+            int experience_points_needed{((level+1) * (level+1) * 3)};
+            while(experience_points >= experience_points_needed) {
+                level++;
+                max_health += 15;
+                max_mana += 5;
+                mana_restore(1000);
+                heal(1000);
+                damage = 20 + level * level * 0.15;
+                experience_points -= experience_points_needed;
+                experience_points_needed = ((level+1) * (level+1) * 3);
+            }
+        }
+        
+        void gain_experience_points(int &experience_points_gained) {
+            experience_points += experience_points_gained;
+            check_level_up();
+            
+        }
+        
+        int get_level() {
+            return level;   
+        }
+        
+        void mana_restore(int restore_amount) {
+            if(restore_amount >= 0) {
+                mana += restore_amount;
+                if(mana > max_mana) {
+                    mana = max_mana; 
+                }
+                was_mana_restored = true;
+            }
+        }
+        
+        int get_mana() {
+            return mana;
+        }
 
 };
 
@@ -116,6 +189,11 @@ class monster : public entity {
             target->hit(damage);
         }
 };
+
+void player::attack(std::unique_ptr<monster> &target, int damage) {
+    target->hit(damage * weakened_amount);
+    std::cout<< this->get_name() << " Attacks " << target->get_name() << "!\n";
+}
 
 class hydra : public monster {
     public:
@@ -131,6 +209,7 @@ class hydra : public monster {
                 target->hit(damage); // stomp
             } else if(random > 2) {
                 target->hit(damage); // acid spray
+                target->set_debuff("acidified", 4);
             } 
         }
 };
@@ -145,6 +224,7 @@ class wraith : public monster {
         
         void attack(std::unique_ptr<player> &target) {
             target->hit(damage); // haunt
+            target->set_debuff("hexed", 2);
         }
 };
 
@@ -189,8 +269,13 @@ class stone_golem : public monster {
             int random = (std::rand() % 4); // 0 1 2 | 3
             if(random < 3) {
                 target->hit(damage); // smash
+                random = (std::rand() % 2); // 1 | 2
+                if(random > 1) {
+                    target->set_debuff("weakened", 2);   
+                }
             } else if(random > 2) {
-                target->hit(damage); // crush
+                target->hit(damage + 25); // crush
+                target->set_debuff("prone", 2);
             } 
         }
 };
@@ -208,6 +293,7 @@ class armored_dragon : public monster {
             int random = (std::rand() % 4); // 0 1 | 2 3
             if(random < 2) {
                 target->hit(damage); // breathe fire
+                target->set_debuff("ablaze", 4);
             } else if(random > 1) {
                 target->hit(damage); // stomp
             } 
@@ -227,8 +313,9 @@ class lord_cthulhu : public monster {
             int random = (std::rand() % 5); // 0 1 | 2 3 4
             if(random < 2) {
                 target->hit(damage); // water torrent
+                target->set_debuff("drenched", 0);
             } else if(random > 1) {
-                target->hit(damage); // magic missile
+                target->hit(damage + 5); // magic missile
             } 
         }
 };
@@ -255,20 +342,44 @@ class ghoul : public monster {
         ghoul(const std::string &name) : monster(name) {
             max_health = 150;
             health = max_health;
+            damage = 10;
+        }
+        
+        void attack(std::unique_ptr<player> &target) {
+            int random = (std::rand() % 5); // 0 1 | 2
+            if(random < 2) { // takle
+                target->hit(damage);
+            } else if(random > 1) {
+                target->hit(damage); // scratch
+                target->set_debuff("bloodied", 3);
+            } 
         }
 };
 
-class goblin_warlock : public monster {
+class warlock : public monster {
     public:
-        goblin_warlock(const std::string &name) : monster(name) {
+        warlock(const std::string &name) : monster(name) {
             max_health = 400;
             health = max_health;
         }
         
-        void heal_allies(std::vector<std::unique_ptr<monster>> &allies) { // heals at max the five lowest health monsters for 50HP, but no monster can get healed twice in a turn
-            bool are_all_healed{std::all_of(allies.begin(), allies.end(),[](const std::unique_ptr<monster>& a) {return (a->was_healed());})}; // makes sure you dont heal any monster twice / you cant heal an already healed monster
+        void attack(std::unique_ptr<player> &target) {
+            int random = (std::rand() % 5); // 0 1 | 2 3 4
+            if(random < 2) { // heals alies
+                heal_allies(); 
+            } else if(random > 1) {
+                target->hit(damage); // magic missile
+                random = (std::rand() % 3); // 0 1 | 2
+                if(random > 1) {
+                    target->set_debuff("hexed", 2);   
+                }
+            } 
+        }
+        
+        void heal_allies() { // heals at max the five lowest health monsters for 50HP, but no monster can get healed twice in a turn
+            bool are_all_healed{std::all_of(monsters.begin(), monsters.end(),[](const std::unique_ptr<monster>& a) {return (a->was_healed());})}; // makes sure you dont heal any monster twice / you cant heal an already healed monster
                 for(int i = 0; i < 5 && !are_all_healed; i++) {
-                    auto it = std::min_element(allies.begin(), allies.end(),[](const std::unique_ptr<monster>& a, const std::unique_ptr<monster>& b) { // finds the goblin with the lowest unhealed health
+                    auto it = std::min_element(monsters.begin(), monsters.end(),[](const std::unique_ptr<monster>& a, const std::unique_ptr<monster>& b) { // finds the goblin with the lowest unhealed health
                         if(!a->was_healed() && b->was_healed()) { // if "b" was healed and "a" was not then "a" is automaticaly the smalest unhealed
                             return true;    
                         }
@@ -278,7 +389,7 @@ class goblin_warlock : public monster {
                         return(a->get_health() < b->get_health()); // is "a" the smallest neither have been healed
                     });
                     (*it)->heal(50);
-                    are_all_healed = std::all_of(allies.begin(), allies.end(),[](const std::unique_ptr<monster>& a) {return (a->was_healed());}); // re-check if all monsters are healed
+                    are_all_healed = std::all_of(monsters.begin(), monsters.end(),[](const std::unique_ptr<monster>& a) {return (a->was_healed());}); // re-check if all monsters are healed
                 }
                 std::cout << "----Heal Allies!----\n";
             }
@@ -314,16 +425,18 @@ void splash_attack(std::vector<std::unique_ptr<monster>> &monsters) {
 
 int main() {
     std::srand(std::time(nullptr)); // seeds random generator
-    std::vector<std::unique_ptr<monster>> monsters;
-    monsters = spawn_monsters(4); // spawns monsters
-    std::unique_ptr<goblin_warlock> warlock = std::make_unique<goblin_warlock>("warlock 1"); // spawns a warlock
+    
+    //monsters = spawn_monsters(4); // spawns monsters
+    std::unique_ptr<stone_golem> testmonster = std::make_unique<stone_golem>("golem 1"); // spawns a warlock
     
     std::unique_ptr<player> the_player = std::make_unique<player>("Undeciphered");
     
-    int gained{3333}; // temp varibale for testing
+    testmonster->attack(the_player);
+    testmonster->attack(the_player);
+    testmonster->attack(the_player);
+    testmonster->attack(the_player);
+    the_player->heal(1000);
+    the_player->print_debuffs();
     
-    the_player->gain_experience_points(gained);
-    std::cout << " level: " << the_player->get_level() << ", health: " << the_player->get_health() << ", mana: " << the_player->get_mana();
-
     return 0;
 }
