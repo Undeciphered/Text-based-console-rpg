@@ -252,7 +252,7 @@ class wyrm : public monster {
         wyrm(const std::string &name) : monster(name) {
             max_health = 100;
             health = max_health;
-            damage = 10;
+            damage = 15;
         }
     
 };
@@ -306,7 +306,7 @@ class lord_cthulhu : public monster {
         lord_cthulhu(const std::string &name) : monster(name) {
             max_health = 400;
             health = max_health;
-            damage = 25;
+            damage = 20;
         }
         
         void attack(std::unique_ptr<player> &target) {
@@ -315,7 +315,7 @@ class lord_cthulhu : public monster {
                 target->hit(damage); // water torrent
                 target->set_debuff("drenched", 0);
             } else if(random > 1) {
-                target->hit(damage + 5); // magic missile
+                target->hit(damage + 10); // magic missile
             } 
         }
 };
@@ -423,20 +423,22 @@ void splash_attack(std::vector<std::unique_ptr<monster>> &monsters) {
     std::cout << "---Splash Attack!---\n";
 }
 
+void gameplay_loop() {
+    while(true){
+        
+        std::unique_ptr<stone_golem> stone_golem_1 = std::make_unique<stone_golem>("stone golem 1"); // spawns a warlock
+        std::unique_ptr<player> the_player = std::make_unique<player>("Undeciphered");
+        the_player->set_debuff("prone", 2);
+        the_player->print_debuffs();
+        
+        return;
+    }
+}
+
 int main() {
     std::srand(std::time(nullptr)); // seeds random generator
-    
-    //monsters = spawn_monsters(4); // spawns monsters
-    std::unique_ptr<stone_golem> testmonster = std::make_unique<stone_golem>("golem 1"); // spawns a warlock
-    
-    std::unique_ptr<player> the_player = std::make_unique<player>("Undeciphered");
-    
-    testmonster->attack(the_player);
-    testmonster->attack(the_player);
-    testmonster->attack(the_player);
-    testmonster->attack(the_player);
-    the_player->heal(1000);
-    the_player->print_debuffs();
+    gameplay_loop();
+
     
     return 0;
 }
