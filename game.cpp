@@ -77,7 +77,7 @@ class player : public entity {
             health = max_health;
         }
         
-        void attack(std::unique_ptr<monster> &target, int damage);
+        void attack(std::unique_ptr<monster> &target);
         
         void set_debuff(std::string debuff, int info) {
             debuffs[debuff] = {true, info};
@@ -185,8 +185,8 @@ class monster : public entity {
         }
 };
 
-void player::attack(std::unique_ptr<monster> &target, int damage) {
-    target->hit(damage * weakened_amount);
+void player::attack(std::unique_ptr<monster> &target) {
+    target->hit(this->damage * weakened_amount);
     std::cout<< this->get_name() << " Attacks " << target->get_name() << "!\n";
 }
 
@@ -487,8 +487,8 @@ void spawn_monster_type_four(int spawnable_amount) {
     int random{0};
     while(spawnable_amount != 0) {
         random = std::rand() % 3;
-        if(random < 1) {monsters.push_back(std::make_unique<lord_cthulhu>("Stone Golem 4"));}
-        if(random > 0) {monsters.push_back(std::make_unique<hydra>("Armored dragon 4"));}
+        if(random < 1) {monsters.push_back(std::make_unique<stone_golem>("Stone Golem 4"));}
+        if(random > 0) {monsters.push_back(std::make_unique<armored_dragon>("Armored Dragon 4"));}
         spawnable_amount--;
     }
 }
@@ -520,7 +520,7 @@ void spawn_monsters(int level, std::queue<int> &enemy_linup) {
            if(random < 1) {spawn_monster_type_three(1);}
         }
     }
-    if(monster_dificulty == 3) {
+    if(monster_dificulty == 4) {
         spawn_monster_type_four(1);
     }
     enemy_linup.pop();
@@ -535,15 +535,19 @@ void print_queue(std::queue<int> myqueue) {
 }
 
 void gameplay_loop() { 
-    std::queue<int> enemy_linup = initialise_enemy_linup(); 
+    // std::queue<int> enemy_linup = initialise_enemy_linup(); 
+    std::queue<int> enemy_linup; // temporary for testing
+    enemy_linup.push(4);
     while(true){
         
         std::unique_ptr<player> the_player = std::make_unique<player>("Undeciphered");
-        int temp_exp = 90;
+        int temp_exp = 9933;
         the_player->gain_experience_points(temp_exp);
         
         print_queue(enemy_linup);
         spawn_monsters(the_player->get_level(), enemy_linup);
+        print_monsters();
+        the_player->attack(monsters[0]);
         print_monsters();
         
         return;
