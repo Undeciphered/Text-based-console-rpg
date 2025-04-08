@@ -407,8 +407,9 @@ class warlock : public monster {
 };
 
 void print_character(std::unique_ptr<player> &the_player) {
-    for(auto &c : monsters) {
-        std::cout << "| " << c->get_name() << ": " << c->get_health() << "HP "; 
+    int monster_amount{static_cast<int>(monsters.size())};
+    for(int i = 0; i < monster_amount; i++) {
+        std::cout << "| <" << i << ">" << monsters[i]->get_name() << ": " << monsters[i]->get_health() << "HP "; 
     }
     std::cout << "|\n\n\n" << "<Level:" << the_player->get_level() << ">" << the_player->get_name() << ": " << the_player->get_health() << "/" << the_player->get_max_health() << "HP, ";
     std::cout << the_player->get_mana() << "/" << the_player->get_max_mana() << "Mana\n";
@@ -467,46 +468,45 @@ std::queue<int> initialise_enemy_linup() {
     return enemy_linup;
 }
 
-void spawn_monster_type_one(int spawnable_amount, int monster_id) {
+void spawn_monster_type_one(int spawnable_amount) {
     int random{0};
     while(spawnable_amount != 0) {
         random = std::rand() % 3;
-        if(random == 0) {monsters.push_back(std::make_unique<bat>("<" + std::to_string(monster_id) + ">Bat"));}
-        if(random == 1) {monsters.push_back(std::make_unique<imp>("<" + std::to_string(monster_id) + ">Imp"));}
-        if(random == 2) {monsters.push_back(std::make_unique<goblin>("<" + std::to_string(monster_id) + ">Goblin"));}
-        spawnable_amount--;
-        monster_id++;
-    }
-}
-
-void spawn_monster_type_two(int spawnable_amount, int monster_id) {
-    int random{0};
-    while(spawnable_amount != 0) {
-        random = std::rand() % 3;
-        if(random == 0) {monsters.push_back(std::make_unique<wyrm>("<" + std::to_string(monster_id) + ">Wyrm"));}
-        if(random == 1) {monsters.push_back(std::make_unique<wraith>("<" + std::to_string(monster_id) + ">Wraith"));}
-        if(random == 2) {monsters.push_back(std::make_unique<ghoul>("<" + std::to_string(monster_id) + ">Ghoul"));}
+        if(random == 0) {monsters.push_back(std::make_unique<bat>("Bat 1"));}
+        if(random == 1) {monsters.push_back(std::make_unique<imp>("Imp 1"));}
+        if(random == 2) {monsters.push_back(std::make_unique<goblin>("Goblin 1"));}
         spawnable_amount--;
     }
 }
 
-void spawn_monster_type_three(int spawnable_amount, int monster_id) {
+void spawn_monster_type_two(int spawnable_amount) {
+    int random{0};
+    while(spawnable_amount != 0) {
+        random = std::rand() % 3;
+        if(random == 0) {monsters.push_back(std::make_unique<wyrm>("Wyrm 2"));}
+        if(random == 1) {monsters.push_back(std::make_unique<wraith>("Wraith 2"));}
+        if(random == 2) {monsters.push_back(std::make_unique<ghoul>("Ghoul 2"));}
+        spawnable_amount--;
+    }
+}
+
+void spawn_monster_type_three(int spawnable_amount) {
     int random{0};
     while(spawnable_amount != 0) {
         random = std::rand() % 5;
-        if(random == 0) {monsters.push_back(std::make_unique<lord_cthulhu>("<" + std::to_string(monster_id) + ">Lord Cthulhu"));}
-        if(random == 1 || random == 2) {monsters.push_back(std::make_unique<hydra>("<" + std::to_string(monster_id) + ">Hydra"));}
-        if(random == 3 || random == 4) {monsters.push_back(std::make_unique<warlock>("<" + std::to_string(monster_id) + ">Warlock"));}
+        if(random == 0) {monsters.push_back(std::make_unique<lord_cthulhu>("Lord Cthulhu 3"));}
+        if(random == 1 || random == 2) {monsters.push_back(std::make_unique<hydra>("Hydra 3"));}
+        if(random == 3 || random == 4) {monsters.push_back(std::make_unique<warlock>("Warlock 3"));}
         spawnable_amount--;
     }
 }
 
-void spawn_monster_type_four(int spawnable_amount, int monster_id) {
+void spawn_monster_type_four(int spawnable_amount) {
     int random{0};
     while(spawnable_amount != 0) {
         random = std::rand() % 3;
-        if(random < 1) {monsters.push_back(std::make_unique<stone_golem>("<" + std::to_string(monster_id) + ">Stone Golem"));}
-        if(random > 0) {monsters.push_back(std::make_unique<armored_dragon>("<" + std::to_string(monster_id) + ">Armored Dragon"));}
+        if(random < 1) {monsters.push_back(std::make_unique<stone_golem>("Stone Golem 4"));}
+        if(random > 0) {monsters.push_back(std::make_unique<armored_dragon>("Armored Dragon 4"));}
         spawnable_amount--;
     }
 }
@@ -516,36 +516,30 @@ void spawn_monsters(int level, std::queue<int> &enemy_linup) {
     int spawnable_amount = (std::round(pow(level,1.3) / 10) + 1);
     int monster_dificulty = enemy_linup.front();
     int random{0};
-    int monster_id{0};
     
     if(monster_dificulty == 1) {
-        spawn_monster_type_one(spawnable_amount, monster_id);
+        spawn_monster_type_one(spawnable_amount);
     }
     if(monster_dificulty == 2) {
-        spawn_monster_type_two(1, monster_id);
-        monster_id++;
+        spawn_monster_type_two(1);
         spawnable_amount--;
         for(int i = 0; i < spawnable_amount; i++) {
            random = std::rand() % 3; // 0 | 1 2 
-           if(random > 0) {spawn_monster_type_one(1, monster_id);}
-           if(random < 1) {spawn_monster_type_two(1, monster_id);}
-           monster_id++;
+           if(random > 0) {spawn_monster_type_one(1);}
+           if(random < 1) {spawn_monster_type_two(1);}
         }
     }
     if(monster_dificulty == 3) {
-        spawn_monster_type_three(1, monster_id);
-        monster_id++;
+        spawn_monster_type_three(1);
         spawnable_amount--;
         for(int i = 0; i < spawnable_amount; i++) {
            random = std::rand() % 4; // 0 | 1 2 3
-           if(random > 0) {spawn_monster_type_two(1, monster_id);}
-           if(random < 1) {spawn_monster_type_three(1, monster_id);}
-           monster_id++;
+           if(random > 0) {spawn_monster_type_two(1);}
+           if(random < 1) {spawn_monster_type_three(1);}
         }
     }
     if(monster_dificulty == 4) {
-        spawn_monster_type_four(1, monster_id);
-        monster_id++;
+        spawn_monster_type_four(1);
     }
     enemy_linup.pop();
 }
@@ -590,7 +584,7 @@ void player_turn(std::unique_ptr<player> &the_player) {
     }
     
     
-    
+     
 }
 
 void monster_turn() {
@@ -609,8 +603,8 @@ void gameplay_loop() {
         spawn_monsters(the_player->get_level(), enemy_linup);
         print_character(the_player);
         //player_turn(the_player);
-        
-        monsters[0]->attack(the_player);
+        monster_turn();
+
         return;
     }
 }
