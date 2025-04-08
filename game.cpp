@@ -77,7 +77,19 @@ class player : public entity {
             health = max_health;
         }
         
-        void attack(std::unique_ptr<monster> &target);
+                int get_max_mana() {
+            return max_mana;   
+        }
+        
+        int get_max_health() {
+            return max_health;   
+        }
+        
+        void use_mana(int amount_used) {
+            mana-= amount_used;   
+        }
+        
+        void attack(std::unique_ptr<monster> &target, int damage_boost);
         
         void set_debuff(std::string debuff, int info) {
             debuffs[debuff] = {true, info};
@@ -137,7 +149,7 @@ class player : public entity {
         }
         
         void check_level_up() {
-            int experience_points_needed{((level+1) * (level+1) * 3)};
+            int experience_points_needed{(25+(25 * (level+1)))};
             while(experience_points >= experience_points_needed) {
                 level++;
                 max_health += 15;
@@ -146,7 +158,7 @@ class player : public entity {
                 heal(1000);
                 damage = 20 + level * level * 0.15;
                 experience_points -= experience_points_needed;
-                experience_points_needed = ((level+1) * (level+1) * 3);
+                experience_points_needed = (25+(25 * (level+1)));
             }
         }
         
@@ -185,9 +197,9 @@ class monster : public entity {
         }
 };
 
-void player::attack(std::unique_ptr<monster> &target) {
+void player::attack(std::unique_ptr<monster> &target, int damage_boost) {
     target->hit(this->damage * weakened_amount);
-    std::cout<< this->get_name() << " Attacks " << target->get_name() << "!\n";
+    std::cout<< this->get_name() << " Attacked " << target->get_name() << " for " << this->damage + damage_boost << " damage!\n";
 }
 
 class hydra : public monster {
@@ -214,11 +226,11 @@ class wraith : public monster {
         wraith(const std::string &name) : monster(name) {
             max_health = 150;
             health = max_health;
-            damage = 0;
+            damage = 15;
         }
         
         void attack(std::unique_ptr<player> &target) {
-            target->hit(damage); // haunt
+            target->hit(damage-15); // haunt
             target->set_debuff("hexed", 2);
         }
 };
@@ -315,15 +327,6 @@ class lord_cthulhu : public monster {
         }
 };
 
-class the_reaper : public monster {
-    public:
-        the_reaper(const std::string &name) : monster(name) {
-            max_health = 10000;
-            health = max_health;
-            damage = 1000;
-        }
-};
-
 class goblin : public monster {
     public:
         goblin(const std::string &name) : monster(name) {
@@ -371,30 +374,31 @@ class warlock : public monster {
             } 
         }
         
-        void heal_allies() { // heals at max the five lowest health monsters for 50HP, but no monster can get healed twice in a turn
+        void heal_allies() { // heals at max the two lowest health monsters for 50HP, but no monster can get healed twice in a turn
             bool are_all_healed{std::all_of(monsters.begin(), monsters.end(),[](const std::unique_ptr<monster>& a) {return (a->was_healed());})}; // makes sure you dont heal any monster twice / you cant heal an already healed monster
-                for(int i = 0; i < 5 && !are_all_healed; i++) {
-                    auto it = std::min_element(monsters.begin(), monsters.end(),[](const std::unique_ptr<monster>& a, const std::unique_ptr<monster>& b) { // finds the goblin with the lowest unhealed health
-                        if(!a->was_healed() && b->was_healed()) { // if "b" was healed and "a" was not then "a" is automaticaly the smalest unhealed
-                            return true;    
-                        }
-                        if(a->was_healed() && !b->was_healed()) { // if "a" was healed and "b" was not then "a" is not the smalest unhealed
-                            return false;   
-                        }
-                        return(a->get_health() < b->get_health()); // is "a" the smallest neither have been healed
-                    });
-                    (*it)->heal(50);
-                    are_all_healed = std::all_of(monsters.begin(), monsters.end(),[](const std::unique_ptr<monster>& a) {return (a->was_healed());}); // re-check if all monsters are healed
-                }
-                std::cout << "----Heal Allies!----\n";
+            for(int i = 0; i < 2 && !are_all_healed; i++) {
+                auto it = std::min_element(monsters.begin(), monsters.end(),[](const std::unique_ptr<monster>& a, const std::unique_ptr<monster>& b) { // finds the goblin with the lowest unhealed health
+                    if(!a->was_healed() && b->was_healed()) { // if "b" was healed and "a" was not then "a" is automaticaly the smalest unhealed
+                        return true;    
+                    }
+                    if(a->was_healed() && !b->was_healed()) { // if "a" was healed and "b" was not then "a" is not the smalest unhealed
+                        return false;   
+                    }
+                    return(a->get_health() < b->get_health()); // is "a" the smallest neither have been healed
+                });
+                (*it)->heal(50);
+                are_all_healed = std::all_of(monsters.begin(), monsters.end(),[](const std::unique_ptr<monster>& a) {return (a->was_healed());}); // re-check if all monsters are healed
             }
+            std::cout << "----Heal Allies!----\n";
+        }
 };
 
-void print_monsters() {
+void print_character(std::unique_ptr<player> &the_player) {
     for(auto &c : monsters) {
         std::cout << "| " << c->get_name() << ": " << c->get_health() << "HP "; 
     }
-    std::cout << "|\n";
+    std::cout << "|\n\n\n" << "<Level:" << the_player->get_level() << ">" << the_player->get_name() << ": " << the_player->get_health() << "/" << the_player->get_max_health() << "HP, ";
+    std::cout << the_player->get_mana() << "/" << the_player->get_max_mana() << "Mana\n";
 }
 
 std::queue<int> initialise_enemy_linup() {
@@ -450,45 +454,46 @@ std::queue<int> initialise_enemy_linup() {
     return enemy_linup;
 }
 
-void spawn_monster_type_one(int spawnable_amount) {
+void spawn_monster_type_one(int spawnable_amount, int monster_id) {
     int random{0};
     while(spawnable_amount != 0) {
         random = std::rand() % 3;
-        if(random == 0) {monsters.push_back(std::make_unique<bat>("Bat 1"));}
-        if(random == 1) {monsters.push_back(std::make_unique<imp>("Imp 1"));}
-        if(random == 2) {monsters.push_back(std::make_unique<goblin>("Goblin 1"));}
+        if(random == 0) {monsters.push_back(std::make_unique<bat>("<" + std::to_string(monster_id) + ">Bat"));}
+        if(random == 1) {monsters.push_back(std::make_unique<imp>("<" + std::to_string(monster_id) + ">Imp"));}
+        if(random == 2) {monsters.push_back(std::make_unique<goblin>("<" + std::to_string(monster_id) + ">Goblin"));}
+        spawnable_amount--;
+        monster_id++;
+    }
+}
+
+void spawn_monster_type_two(int spawnable_amount, int monster_id) {
+    int random{0};
+    while(spawnable_amount != 0) {
+        random = std::rand() % 3;
+        if(random == 0) {monsters.push_back(std::make_unique<wyrm>("<" + std::to_string(monster_id) + ">Wyrm"));}
+        if(random == 1) {monsters.push_back(std::make_unique<wraith>("<" + std::to_string(monster_id) + ">Wraith"));}
+        if(random == 2) {monsters.push_back(std::make_unique<ghoul>("<" + std::to_string(monster_id) + ">Ghoul"));}
         spawnable_amount--;
     }
 }
 
-void spawn_monster_type_two(int spawnable_amount) {
-    int random{0};
-    while(spawnable_amount != 0) {
-        random = std::rand() % 3;
-        if(random == 0) {monsters.push_back(std::make_unique<wyrm>("Wyrm 2"));}
-        if(random == 1) {monsters.push_back(std::make_unique<wraith>("Wraith 2"));}
-        if(random == 2) {monsters.push_back(std::make_unique<ghoul>("Ghoul 2"));}
-        spawnable_amount--;
-    }
-}
-
-void spawn_monster_type_three(int spawnable_amount) {
+void spawn_monster_type_three(int spawnable_amount, int monster_id) {
     int random{0};
     while(spawnable_amount != 0) {
         random = std::rand() % 5;
-        if(random == 0) {monsters.push_back(std::make_unique<lord_cthulhu>("Lord Cthulhu 3"));}
-        if(random == 1 || random == 2) {monsters.push_back(std::make_unique<hydra>("Hydra 3"));}
-        if(random == 3 || random == 4) {monsters.push_back(std::make_unique<warlock>("Warlock 3"));}
+        if(random == 0) {monsters.push_back(std::make_unique<lord_cthulhu>("<" + std::to_string(monster_id) + ">Lord Cthulhu"));}
+        if(random == 1 || random == 2) {monsters.push_back(std::make_unique<hydra>("<" + std::to_string(monster_id) + ">Hydra"));}
+        if(random == 3 || random == 4) {monsters.push_back(std::make_unique<warlock>("<" + std::to_string(monster_id) + ">Warlock"));}
         spawnable_amount--;
     }
 }
 
-void spawn_monster_type_four(int spawnable_amount) {
+void spawn_monster_type_four(int spawnable_amount, int monster_id) {
     int random{0};
     while(spawnable_amount != 0) {
         random = std::rand() % 3;
-        if(random < 1) {monsters.push_back(std::make_unique<stone_golem>("Stone Golem 4"));}
-        if(random > 0) {monsters.push_back(std::make_unique<armored_dragon>("Armored Dragon 4"));}
+        if(random < 1) {monsters.push_back(std::make_unique<stone_golem>("<" + std::to_string(monster_id) + ">Stone Golem"));}
+        if(random > 0) {monsters.push_back(std::make_unique<armored_dragon>("<" + std::to_string(monster_id) + ">Armored Dragon"));}
         spawnable_amount--;
     }
 }
@@ -498,30 +503,36 @@ void spawn_monsters(int level, std::queue<int> &enemy_linup) {
     int spawnable_amount = (std::round(pow(level,1.3) / 10) + 1);
     int monster_dificulty = enemy_linup.front();
     int random{0};
+    int monster_id{0};
     
     if(monster_dificulty == 1) {
-        spawn_monster_type_one(spawnable_amount);
+        spawn_monster_type_one(spawnable_amount, monster_id);
     }
     if(monster_dificulty == 2) {
-        spawn_monster_type_two(1);
+        spawn_monster_type_two(1, monster_id);
+        monster_id++;
         spawnable_amount--;
         for(int i = 0; i < spawnable_amount; i++) {
            random = std::rand() % 3; // 0 | 1 2 
-           if(random > 0) {spawn_monster_type_one(1);}
-           if(random < 1) {spawn_monster_type_two(1);}
+           if(random > 0) {spawn_monster_type_one(1, monster_id);}
+           if(random < 1) {spawn_monster_type_two(1, monster_id);}
+           monster_id++;
         }
     }
     if(monster_dificulty == 3) {
-        spawn_monster_type_three(1);
+        spawn_monster_type_three(1, monster_id);
+        monster_id++;
         spawnable_amount--;
         for(int i = 0; i < spawnable_amount; i++) {
            random = std::rand() % 4; // 0 | 1 2 3
-           if(random > 0) {spawn_monster_type_two(1);}
-           if(random < 1) {spawn_monster_type_three(1);}
+           if(random > 0) {spawn_monster_type_two(1, monster_id);}
+           if(random < 1) {spawn_monster_type_three(1, monster_id);}
+           monster_id++;
         }
     }
     if(monster_dificulty == 4) {
-        spawn_monster_type_four(1);
+        spawn_monster_type_four(1, monster_id);
+        monster_id++;
     }
     enemy_linup.pop();
 }
@@ -534,21 +545,58 @@ void print_queue(std::queue<int> myqueue) {
     std::cout << '\n';
 }
 
-void gameplay_loop() { 
-    // std::queue<int> enemy_linup = initialise_enemy_linup(); 
-    std::queue<int> enemy_linup; // temporary for testing
-    enemy_linup.push(4);
+int get_input(int range_start, int range_end,int must_divisible_by) {
+    std::string input{""};
+    int chosen_number{0};
+    while(true) {
+        std::cin >> input;
+        if(std::all_of(input.begin(), input.end(), ::isdigit)) {
+            chosen_number = stoi(input);
+        }
+        if(chosen_number >= range_start && chosen_number <= range_end && chosen_number > -1 && chosen_number % must_divisible_by == 0) {
+            return chosen_number;
+        }
+    } 
+}
+
+void player_turn(std::unique_ptr<player> &the_player) {
+    std::cout << the_player->get_name() << "'s turn\n1 : Attack\n2 : Heal\n";
+    int player_action{get_input(1,2,1)};
+    if(player_action == 1) {
+        std::cout << "What monster will you attack?: ";
+        int attack_action{get_input(0,(int)monsters.size()-1,1)};
+        the_player->attack(monsters[attack_action], 0);
+        the_player->mana_restore(5);
+    }
+    if(player_action == 2) {
+        std::cout << "how much will you heal for? (5 mana per 10HP): ";
+        int heal_action{get_input(0,(the_player->get_mana()/5)*10,10)};
+        the_player->heal(heal_action); 
+        the_player->use_mana((heal_action/10)*5);
+        std::cout << the_player->get_name() << " was healed for " << heal_action << "HP\n";
+    }
+    
+    
+    
+}
+
+void monster_turn() {
+    
+    
+    
+}
+
+void gameplay_loop() {
+    std::queue<int> enemy_linup = initialise_enemy_linup();
     while(true){
         
         std::unique_ptr<player> the_player = std::make_unique<player>("Undeciphered");
-        int temp_exp = 9933;
-        the_player->gain_experience_points(temp_exp);
-        
-        print_queue(enemy_linup);
+        int xp = 3375;
+        the_player->gain_experience_points(xp);
         spawn_monsters(the_player->get_level(), enemy_linup);
-        print_monsters();
-        the_player->attack(monsters[0]);
-        print_monsters();
+        print_character(the_player);
+        player_turn(the_player);
+        
         
         return;
     }
