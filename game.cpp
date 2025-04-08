@@ -21,6 +21,8 @@ class entity {
         entity(const std::string &Name) {
             name = Name;
         }
+        
+        virtual ~entity() = default;
 
         void heal(int heal_amount) {
             if(heal_amount >= 0) {
@@ -76,6 +78,8 @@ class player : public entity {
             max_health = 100;
             health = max_health;
         }
+        
+        virtual ~player() = default;
         
                 int get_max_mana() {
             return max_mana;   
@@ -192,9 +196,12 @@ class monster : public entity {
     public:
         monster(const std::string &name) : entity(name) {}
         
-        void attack(std::unique_ptr<player> &target) {
+        virtual void attack(std::unique_ptr<player> &target) {
             target->hit(damage);
+            std::cout << "should be overwriten";
         }
+        
+        virtual ~monster() = default;
 };
 
 void player::attack(std::unique_ptr<monster> &target, int damage_boost) {
@@ -210,7 +217,7 @@ class hydra : public monster {
             damage = 15;
         }
         
-        void attack(std::unique_ptr<player> &target) {
+        void attack(std::unique_ptr<player> &target) override {
             int random = (std::rand() % 4); // 0 1 2 | 3
             if(random < 3) {
                 target->hit(damage); // stomp
@@ -229,7 +236,7 @@ class wraith : public monster {
             damage = 15;
         }
         
-        void attack(std::unique_ptr<player> &target) {
+        void attack(std::unique_ptr<player> &target) override {
             target->hit(damage-15); // haunt
             target->set_debuff("hexed", 2);
         }
@@ -272,7 +279,7 @@ class stone_golem : public monster {
             damage = 50;
         }
         
-        void attack(std::unique_ptr<player> &target) {
+        void attack(std::unique_ptr<player> &target) override {
             int random = (std::rand() % 4); // 0 1 2 | 3
             if(random < 3) {
                 target->hit(damage); // smash
@@ -296,7 +303,7 @@ class armored_dragon : public monster {
             damage = 50;
         }
         
-        void attack(std::unique_ptr<player> &target) {
+        void attack(std::unique_ptr<player> &target) override {
             int random = (std::rand() % 4); // 0 1 | 2 3
             if(random < 2) {
                 target->hit(damage); // breathe fire
@@ -316,7 +323,7 @@ class lord_cthulhu : public monster {
             damage = 20;
         }
         
-        void attack(std::unique_ptr<player> &target) {
+        void attack(std::unique_ptr<player> &target) override {
             int random = (std::rand() % 5); // 0 1 | 2 3 4
             if(random < 2) {
                 target->hit(damage); // water torrent
@@ -333,6 +340,12 @@ class goblin : public monster {
             max_health = 100;
             health = max_health;
         }
+        
+        void attack(std::unique_ptr<player> &the_player) override {
+            the_player->hit(10); 
+            std::cout << "it works finaly!";
+           
+        }
 };
 
 class ghoul : public monster {
@@ -343,7 +356,7 @@ class ghoul : public monster {
             damage = 10;
         }
         
-        void attack(std::unique_ptr<player> &target) {
+        void attack(std::unique_ptr<player> &target) override {
             int random = (std::rand() % 5); // 0 1 | 2
             if(random < 2) { // takle
                 target->hit(damage);
@@ -361,7 +374,7 @@ class warlock : public monster {
             health = max_health;
         }
         
-        void attack(std::unique_ptr<player> &target) {
+        void attack(std::unique_ptr<player> &target) override {
             int random = (std::rand() % 5); // 0 1 | 2 3 4
             if(random < 2) { // heals alies
                 heal_allies(); 
@@ -595,9 +608,9 @@ void gameplay_loop() {
         the_player->gain_experience_points(xp);
         spawn_monsters(the_player->get_level(), enemy_linup);
         print_character(the_player);
-        player_turn(the_player);
+        //player_turn(the_player);
         
-        
+        monsters[0]->attack(the_player);
         return;
     }
 }
@@ -605,6 +618,8 @@ void gameplay_loop() {
 int main() {
     std::srand(std::time(nullptr)); // seeds random generator
     gameplay_loop();
+    
+
     
     return 0;
 }
